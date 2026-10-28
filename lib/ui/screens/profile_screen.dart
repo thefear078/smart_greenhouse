@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_greenhouse/data/mock_data.dart';
-import 'package:smart_greenhouse/domain/models/user.dart';
 import 'package:smart_greenhouse/domain/validators.dart';
-import 'package:smart_greenhouse/ui/app_scope.dart';
+import 'package:smart_greenhouse/logic/auth/auth_cubit.dart';
+import 'package:smart_greenhouse/logic/auth/auth_state.dart';
 import 'package:smart_greenhouse/ui/routes.dart';
 import 'package:smart_greenhouse/ui/theme/app_theme.dart';
 import 'package:smart_greenhouse/ui/widgets/confirm_dialog.dart';
@@ -14,107 +15,94 @@ import 'package:smart_greenhouse/ui/widgets/section_header.dart';
 import 'package:smart_greenhouse/ui/widgets/snack.dart';
 import 'package:smart_greenhouse/ui/widgets/text_prompt_dialog.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  User? _user;
-  bool _loaded = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_loaded) {
-      _loaded = true;
-      AppScope.of(context).auth.currentUser().then((u) {
-        if (mounted) setState(() => _user = u);
-      });
-    }
-  }
-
-  Future<void> _editName() async {
+  Future<void> _editName(BuildContext context, String current) async {
+    final cubit = context.read<AuthCubit>();
     final name = await textPromptDialog(
       context,
       title: "Змінити ім'я",
-      initial: _user?.name ?? '',
+      initial: current,
       validator: Validators.name,
     );
-    if (name == null || !mounted) return;
-    final updated = await AppScope.of(context).auth.updateName(name);
-    if (!mounted) return;
-    setState(() => _user = updated);
-    Snack.success(context, 'Профіль оновлено');
+    if (name != null) await cubit.updateName(name);
   }
 
-  Future<void> _logout() async {
+  Future<void> _logout(BuildContext context) async {
+    final cubit = context.read<AuthCubit>();
     final ok = await confirmDialog(
       context,
       title: 'Вийти з акаунта?',
       message: 'Збережену сесію буде видалено, потрібно буде увійти знову.',
       confirmLabel: 'Вийти',
     );
-    if (!ok || !mounted) return;
-    await AppScope.of(context).auth.logout();
-    if (!mounted) return;
-    await Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.login,
-      (_) => false,
-    );
+    if (ok) await cubit.logout();
+  }
+
+  void _onState(BuildContext context, AuthState state) {
+    if (state.status == AuthStatus.unauthenticated) {
+      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+    } else if (state.message != null) {
+      Snack.success(context, state.message!);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = _user;
-    if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    return Scaffold(
-      appBar: AppBar(title: const Text('Профіль')),
-      body: PageContainer(
-        children: [
-          ProfileAvatar(name: user.name, email: user.email),
-          const SectionHeader(title: 'Обліковий запис'),
-          Card(
-            child: Column(
-              children: [
-                InfoRow(
-                  icon: Icons.person_outline,
-                  label: "Ім'я",
-                  value: user.name,
+    return BlocConsumer<AuthCubit, AuthState>(
+      listener: _onState,
+      builder: (context, state) {
+        final user = state.user;
+        if (user == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return Scaffold(
+          appBar: AppBar(title: const Text('Профіль')),
+          body: PageContainer(
+            children: [
+              ProfileAvatar(name: user.name, email: user.email),
+              const SectionHeader(title: 'Обліковий запис'),
+              Card(
+                child: Column(
+                  children: [
+                    InfoRow(
+                      icon: Icons.person_outline,
+                      label: "Ім'я",
+                      value: user.name,
+                    ),
+                    InfoRow(
+                      icon: Icons.email_outlined,
+                      label: 'Email',
+                      value: user.email,
+                    ),
+                    const InfoRow(
+                      icon: Icons.house_siding,
+                      label: 'Теплиця',
+                      value: MockData.greenhouseName,
+                    ),
+                  ],
                 ),
-                InfoRow(
-                  icon: Icons.email_outlined,
-                  label: 'Email',
-                  value: user.email,
-                ),
-                const InfoRow(
-                  icon: Icons.house_siding,
-                  label: 'Теплиця',
-                  value: MockData.greenhouseName,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              PrimaryButton(
+                label: 'Редагувати профіль',
+                icon: Icons.edit_outlined,
+                onPressed: () => _editName(context, user.name),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              PrimaryButton(
+                label: 'Вийти',
+                icon: Icons.logout,
+                outlined: true,
+                onPressed: () => _logout(context),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          PrimaryButton(
-            label: 'Редагувати профіль',
-            icon: Icons.edit_outlined,
-            onPressed: _editName,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          PrimaryButton(
-            label: 'Вийти',
-            icon: Icons.logout,
-            outlined: true,
-            onPressed: _logout,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
