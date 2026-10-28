@@ -5,6 +5,7 @@ import 'package:smart_greenhouse/domain/validators.dart';
 import 'package:smart_greenhouse/ui/app_scope.dart';
 import 'package:smart_greenhouse/ui/routes.dart';
 import 'package:smart_greenhouse/ui/theme/app_theme.dart';
+import 'package:smart_greenhouse/ui/widgets/confirm_dialog.dart';
 import 'package:smart_greenhouse/ui/widgets/info_row.dart';
 import 'package:smart_greenhouse/ui/widgets/page_container.dart';
 import 'package:smart_greenhouse/ui/widgets/primary_button.dart';
@@ -50,6 +51,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
+    final ok = await confirmDialog(
+      context,
+      title: 'Вийти з акаунта?',
+      message: 'Збережену сесію буде видалено, потрібно буде увійти знову.',
+      confirmLabel: 'Вийти',
+    );
+    if (!ok || !mounted) return;
     await AppScope.of(context).auth.logout();
     if (!mounted) return;
     await Navigator.pushNamedAndRemoveUntil(

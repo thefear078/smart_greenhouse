@@ -31,6 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!await AppScope.of(context).network.isOnline()) {
+      if (mounted) {
+        Snack.error(context, 'Немає інтернету — вхід неможливий');
+      }
+      return;
+    }
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       await AppScope.of(

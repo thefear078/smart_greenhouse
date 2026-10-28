@@ -2,21 +2,20 @@
 //   flutter test screenshot_test --update-goldens
 // Результат: screenshot_test/goldens/*.png
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_greenhouse/data/local/local_auth_repository.dart';
+import 'package:smart_greenhouse/domain/models/sensor.dart';
 
+import '../test/fakes.dart';
 import '../test/helpers.dart';
 import 'harness.dart';
 
-final _users = {
-  'users':
-      '[{"name":"Костянтин Ягусевич","email":"kostiantyn@lpnu.ua",'
-      '"passwordHash":"${LocalAuthRepository.hash('secret123')}"}]',
-};
+FakeSensors _sensors() => FakeSensors();
 
-Future<void> _toDashboard(WidgetTester t) async {
-  await typeInto(t, 'Email', 'kostiantyn@lpnu.ua');
-  await typeInto(t, 'Пароль', 'secret123');
-  await tapOn(t, find.text('Увійти'));
+Future<void> _feed(FakeSensors s) async {
+  s
+    ..emit(SensorKind.temperature, 24.5)
+    ..emit(SensorKind.humidity, 68)
+    ..emit(SensorKind.soil, 41)
+    ..emit(SensorKind.light, 12400);
 }
 
 void main() {
@@ -28,20 +27,39 @@ void main() {
       await shoot(t, await buildApp(), 'login_$tag', size: size);
     });
     testWidgets('dashboard $tag', (t) async {
-      final app = await buildApp(_users);
-      await shoot(t, app, 'dashboard_$tag', size: size, before: _toDashboard);
+      final s = _sensors();
+      final app = await buildApp(userPrefs(session: true), null, s);
+      await shoot(
+        t,
+        app,
+        'dashboard_$tag',
+        size: size,
+        before: (_) => _feed(s),
+      );
+    });
+    testWidgets('dashboard offline $tag', (t) async {
+      final net = FakeNetwork();
+      final s = _sensors();
+      final app = await buildApp(userPrefs(session: true), net, s);
+      await shoot(
+        t,
+        app,
+        'dashboard_offline_$tag',
+        size: size,
+        before: (_) async {
+          await _feed(s);
+          net.set(false);
+        },
+      );
     });
     testWidgets('profile $tag', (t) async {
-      final app = await buildApp(_users);
+      final app = await buildApp(userPrefs(session: true));
       await shoot(
         t,
         app,
         'profile_$tag',
         size: size,
-        before: (t) async {
-          await _toDashboard(t);
-          await tapOn(t, find.byTooltip('Профіль'));
-        },
+        before: (t) => tapOn(t, find.byTooltip('Профіль')),
       );
     });
   }

@@ -1,17 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:smart_greenhouse/data/mock_data.dart';
+import 'package:smart_greenhouse/domain/models/sensor.dart';
 import 'package:smart_greenhouse/ui/theme/app_theme.dart';
 
-/// Картка показника датчика.
-class SensorCard extends StatelessWidget {
-  const SensorCard({required this.reading, super.key});
+extension SensorKindStyle on SensorKind {
+  IconData get icon => switch (this) {
+    SensorKind.temperature => Icons.thermostat,
+    SensorKind.humidity => Icons.water_drop,
+    SensorKind.soil => Icons.grass,
+    SensorKind.light => Icons.wb_sunny,
+  };
 
-  final SensorReading reading;
+  Color get color => switch (this) {
+    SensorKind.temperature => const Color(0xFFE65100),
+    SensorKind.humidity => const Color(0xFF0277BD),
+    SensorKind.soil => const Color(0xFF6D4C41),
+    SensorKind.light => const Color(0xFFF9A825),
+  };
+}
+
+/// Картка показника датчика; [reading] == null — даних ще немає.
+class SensorCard extends StatelessWidget {
+  const SensorCard({required this.kind, super.key, this.reading});
+
+  final SensorKind kind;
+  final SensorReading? reading;
+
+  String get _value {
+    final v = reading?.value;
+    if (v == null) return '—';
+    return kind == SensorKind.light ? v.round().toString() : v.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final ok = reading.status == 'Норма';
+    final r = reading;
+    final statusColor = r == null
+        ? AppColors.textMuted
+        : (r.isNormal ? AppColors.primary : AppColors.warning);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -23,16 +49,15 @@ class SensorCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: reading.color.withValues(alpha: 0.12),
-                  child: Icon(reading.icon, color: reading.color, size: 20),
+                  backgroundColor: kind.color.withValues(alpha: 0.12),
+                  child: Icon(kind.icon, color: kind.color, size: 20),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    reading.title,
+                    kind.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: text.bodyMedium,
                   ),
                 ),
               ],
@@ -42,20 +67,20 @@ class SensorCard extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text.rich(
                 TextSpan(
-                  text: reading.value,
+                  text: _value,
                   style: text.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                   children: [
-                    TextSpan(text: ' ${reading.unit}', style: text.titleMedium),
+                    TextSpan(text: ' ${kind.unit}', style: text.titleMedium),
                   ],
                 ),
               ),
             ),
             Text(
-              reading.status,
+              r?.status ?? 'Очікування даних',
               style: text.labelMedium?.copyWith(
-                color: ok ? AppColors.primary : AppColors.warning,
+                color: statusColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
