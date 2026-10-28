@@ -11,6 +11,7 @@ class LocalAuthRepository implements IAuthRepository {
 
   static const String _usersKey = 'users';
   static const String _sessionKey = 'session_email';
+  static const String _tokenKey = 'session_token';
 
   final JsonStore _store;
 
@@ -40,7 +41,7 @@ class LocalAuthRepository implements IAuthRepository {
       passwordHash: hash(password),
     );
     await _save([...users, user]);
-    await _store.writeString(_sessionKey, normalized);
+    await _startSession(normalized);
     return user;
   }
 
@@ -51,7 +52,7 @@ class LocalAuthRepository implements IAuthRepository {
     if (match.isEmpty || match.first.passwordHash != hash(password)) {
       throw const AuthException('Невірний email або пароль');
     }
-    await _store.writeString(_sessionKey, normalized);
+    await _startSession(normalized);
     return match.first;
   }
 
@@ -74,6 +75,18 @@ class LocalAuthRepository implements IAuthRepository {
     return updated;
   }
 
+  Future<void> _startSession(String email) async {
+    await _store.writeString(_sessionKey, email);
+    final seed = '$email:${DateTime.now().microsecondsSinceEpoch}';
+    await _store.writeString(_tokenKey, hash(seed));
+  }
+
   @override
-  Future<void> logout() => _store.remove(_sessionKey);
+  Future<String?> token() async => _store.readString(_tokenKey);
+
+  @override
+  Future<void> logout() async {
+    await _store.remove(_sessionKey);
+    await _store.remove(_tokenKey);
+  }
 }

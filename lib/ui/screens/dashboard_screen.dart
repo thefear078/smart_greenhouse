@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:smart_greenhouse/data/mock_data.dart';
 import 'package:smart_greenhouse/domain/models/device.dart';
+import 'package:smart_greenhouse/domain/repositories/repository_exception.dart';
 import 'package:smart_greenhouse/ui/app_scope.dart';
 import 'package:smart_greenhouse/ui/routes.dart';
 import 'package:smart_greenhouse/ui/widgets/confirm_dialog.dart';
 import 'package:smart_greenhouse/ui/widgets/device_form_dialog.dart';
 import 'package:smart_greenhouse/ui/widgets/devices_section.dart';
+import 'package:smart_greenhouse/ui/widgets/error_retry.dart';
 import 'package:smart_greenhouse/ui/widgets/greenhouse_header.dart';
 import 'package:smart_greenhouse/ui/widgets/live_sensors_section.dart';
 import 'package:smart_greenhouse/ui/widgets/network_banner.dart';
 import 'package:smart_greenhouse/ui/widgets/page_container.dart';
+import 'package:smart_greenhouse/ui/widgets/snack.dart';
 
-/// Головний екран: датчики (mock) і CRUD пристроїв зі сховища.
+/// Головний екран: датчики (MQTT) і пристрої (REST API + кеш).
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -20,28 +23,28 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<Device> _devices = const [];
-  bool _loading = true;
+  Future<List<Device>>? _future;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_loading) _reload();
+    _future ??= AppScope.of(context).devices.getAll();
   }
 
-  Future<void> _reload() async {
-    final list = await AppScope.of(context).devices.getAll();
-    if (!mounted) return;
+  void _reload() {
+    final future = AppScope.of(context).devices.getAll();
     setState(() {
-      _devices = list;
-      _loading = false;
+      _future = future;
     });
   }
 
   Future<void> _run(Future<void> Function() action) async {
-    setState(() => _loading = true);
-    await action();
-    await _reload();
+    try {
+      await action();
+    } on RepositoryException catch (e) {
+      if (mounted) Snack.error(context, e.message);
+    }
+    if (mounted) _reload();
   }
 
   Future<void> _add() async {
@@ -77,6 +80,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _run(() => repo.update(d.copyWith(isOn: on)));
   }
 
+  Widget _devices(BuildContext context, AsyncSnapshot<List<Device>> snap) {
+    if (snap.hasError) {
+      return ErrorRetry(message: snap.error.toString(), onRetry: _reload);
+    }
+    return DevicesSection(
+      devices: snap.data ?? const [],
+      loading: snap.connectionState != ConnectionState.done,
+      onEdit: _edit,
+      onDelete: _delete,
+      onToggle: _toggle,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
@@ -84,6 +100,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Smart Greenhouse'),
         actions: [
+          IconButton(
+            tooltip: 'Оновити',
+            icon: const Icon(Icons.refresh),
+            onPressed: _reload,
+          ),
           IconButton(
             tooltip: 'Профіль',
             icon: const Icon(Icons.account_circle_outlined),
@@ -105,13 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               subtitle: 'Телеметрія в реальному часі через MQTT',
             ),
             LiveSensorsSection(service: scope.sensors),
-            DevicesSection(
-              devices: _devices,
-              loading: _loading,
-              onEdit: _edit,
-              onDelete: _delete,
-              onToggle: _toggle,
-            ),
+            FutureBuilder<List<Device>>(future: _future, builder: _devices),
             const SizedBox(height: 80),
           ],
         ),

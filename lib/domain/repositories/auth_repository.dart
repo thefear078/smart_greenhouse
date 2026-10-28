@@ -28,5 +28,8 @@ abstract interface class IAuthRepository {
 
   Future<User> updateName(String name);
 
+  /// Токен сесії для заголовка Authorization (Bearer).
+  Future<String?> token();
+
   Future<void> logout();
 }
