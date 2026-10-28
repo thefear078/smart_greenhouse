@@ -24,6 +24,7 @@ Future<Widget> buildApp([
   Map<String, Object> prefs = const {},
   FakeNetwork? network,
   FakeSensors? sensors,
+  FakeFlashlight? flashlight,
 ]) async {
   SharedPreferences.setMockInitialValues(prefs);
   final store = await JsonStore.create();
@@ -32,6 +33,7 @@ Future<Widget> buildApp([
     devices: LocalDeviceRepository(store),
     network: network ?? FakeNetwork(),
     sensors: sensors ?? FakeSensors(),
+    flashlight: flashlight ?? FakeFlashlight(),
   );
   return SmartGreenhouseApp(
     initialRoute: hasSession ? AppRoutes.dashboard : AppRoutes.login,

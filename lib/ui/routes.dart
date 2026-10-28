@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_greenhouse/di/injector.dart';
 import 'package:smart_greenhouse/logic/devices/devices_cubit.dart';
+import 'package:smart_greenhouse/logic/flashlight/flashlight_cubit.dart';
 import 'package:smart_greenhouse/logic/telemetry/telemetry_cubit.dart';
 import 'package:smart_greenhouse/ui/screens/dashboard_screen.dart';
 import 'package:smart_greenhouse/ui/screens/login_screen.dart';
@@ -22,6 +23,7 @@ abstract final class AppRoutes {
     dashboard: (_) => MultiBlocProvider(
       providers: [
         BlocProvider<DevicesCubit>(create: (_) => sl<DevicesCubit>()..load()),
+        BlocProvider<FlashlightCubit>(create: (_) => sl<FlashlightCubit>()),
         BlocProvider<TelemetryCubit>(
           create: (_) => sl<TelemetryCubit>()..start(),
         ),

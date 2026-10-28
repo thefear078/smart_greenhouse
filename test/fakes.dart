@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:smart_greenhouse/domain/models/sensor.dart';
+import 'package:smart_greenhouse/domain/services/flashlight_service.dart';
 import 'package:smart_greenhouse/domain/services/network_monitor.dart';
 import 'package:smart_greenhouse/domain/services/sensor_service.dart';
 
@@ -48,4 +49,17 @@ class FakeSensors implements ISensorService {
 
   @override
   Future<void> disconnect() async => disconnects++;
+}
+
+class FakeFlashlight implements IFlashlight {
+  FakeFlashlight({this.failure});
+
+  final String? failure;
+  bool isOn = false;
+
+  @override
+  Future<bool> toggle() async {
+    if (failure != null) throw FlashlightFailure(failure!);
+    return isOn = !isOn;
+  }
 }

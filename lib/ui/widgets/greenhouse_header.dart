@@ -8,11 +8,15 @@ class GreenhouseHeader extends StatelessWidget {
     required this.subtitle,
     super.key,
     this.trailing,
+    this.onSecretLongPress,
   });
 
   final String name;
   final String subtitle;
   final Widget? trailing;
+
+  /// Прихована дія (Easter egg) на довге натискання логотипа.
+  final VoidCallback? onSecretLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,15 @@ class GreenhouseHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.house_siding, color: Colors.white, size: 40),
+          GestureDetector(
+            key: const Key('greenhouseLogo'),
+            onLongPress: onSecretLongPress,
+            child: const Icon(
+              Icons.house_siding,
+              color: Colors.white,
+              size: 40,
+            ),
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
