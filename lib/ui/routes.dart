@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:smart_greenhouse/screens/dashboard_screen.dart';
-import 'package:smart_greenhouse/screens/login_screen.dart';
-import 'package:smart_greenhouse/screens/profile_screen.dart';
-import 'package:smart_greenhouse/screens/registration_screen.dart';
+import 'package:smart_greenhouse/ui/screens/dashboard_screen.dart';
+import 'package:smart_greenhouse/ui/screens/login_screen.dart';
+import 'package:smart_greenhouse/ui/screens/profile_screen.dart';
+import 'package:smart_greenhouse/ui/screens/registration_screen.dart';
 
 /// Іменовані маршрути застосунку.
 abstract final class AppRoutes {

@@ -1,37 +1,48 @@
 // Генерація скріншотів для PR:
 //   flutter test screenshot_test --update-goldens
 // Результат: screenshot_test/goldens/*.png
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_greenhouse/routes.dart';
-import 'package:smart_greenhouse/theme/app_theme.dart';
+import 'package:smart_greenhouse/data/local/local_auth_repository.dart';
 
+import '../test/helpers.dart';
 import 'harness.dart';
 
-Widget _app(String route) => MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: AppTheme.light,
-  initialRoute: route,
-  routes: AppRoutes.table,
-);
+final _users = {
+  'users':
+      '[{"name":"Костянтин Ягусевич","email":"kostiantyn@lpnu.ua",'
+      '"passwordHash":"${LocalAuthRepository.hash('secret123')}"}]',
+};
+
+Future<void> _toDashboard(WidgetTester t) async {
+  await typeInto(t, 'Email', 'kostiantyn@lpnu.ua');
+  await typeInto(t, 'Пароль', 'secret123');
+  await tapOn(t, find.text('Увійти'));
+}
 
 void main() {
   setUpAll(loadRealFonts);
 
-  const screens = {
-    'login': AppRoutes.login,
-    'register': AppRoutes.register,
-    'dashboard': AppRoutes.dashboard,
-    'profile': AppRoutes.profile,
-  };
-  for (final e in screens.entries) {
-    testWidgets(
-      '${e.key} phone',
-      (t) => shoot(t, _app(e.value), '${e.key}_phone'),
-    );
-    testWidgets(
-      '${e.key} tablet',
-      (t) => shoot(t, _app(e.value), '${e.key}_tablet', size: tablet),
-    );
+  for (final size in [phone, tablet]) {
+    final tag = size == phone ? 'phone' : 'tablet';
+    testWidgets('login $tag', (t) async {
+      await shoot(t, await buildApp(), 'login_$tag', size: size);
+    });
+    testWidgets('dashboard $tag', (t) async {
+      final app = await buildApp(_users);
+      await shoot(t, app, 'dashboard_$tag', size: size, before: _toDashboard);
+    });
+    testWidgets('profile $tag', (t) async {
+      final app = await buildApp(_users);
+      await shoot(
+        t,
+        app,
+        'profile_$tag',
+        size: size,
+        before: (t) async {
+          await _toDashboard(t);
+          await tapOn(t, find.byTooltip('Профіль'));
+        },
+      );
+    });
   }
 }

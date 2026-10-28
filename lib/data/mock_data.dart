@@ -19,23 +19,7 @@ class SensorReading {
   final String status;
 }
 
-class DeviceInfo {
-  const DeviceInfo({
-    required this.name,
-    required this.zone,
-    required this.icon,
-    required this.isOn,
-  });
-
-  final String name;
-  final String zone;
-  final IconData icon;
-  final bool isOn;
-}
-
 abstract final class MockData {
-  static const String userName = 'Костянтин Ягусевич';
-  static const String userEmail = 'kostiantyn@greenhouse.ua';
   static const String greenhouseName = 'Теплиця «Львів-1»';
 
   static const List<SensorReading> sensors = [
@@ -67,28 +51,6 @@ abstract final class MockData {
       unit: 'лк',
       icon: Icons.wb_sunny,
       color: Color(0xFFF9A825),
-    ),
-  ];
-
-  static const List<DeviceInfo> devices = [
-    DeviceInfo(name: 'Вентилятор', zone: 'Зона A', icon: Icons.air, isOn: true),
-    DeviceInfo(
-      name: 'Насос поливу',
-      zone: 'Зона B',
-      icon: Icons.water,
-      isOn: false,
-    ),
-    DeviceInfo(
-      name: 'Фітолампа',
-      zone: 'Зона A',
-      icon: Icons.light,
-      isOn: true,
-    ),
-    DeviceInfo(
-      name: 'Обігрівач',
-      zone: 'Зона C',
-      icon: Icons.local_fire_department,
-      isOn: false,
     ),
   ];
 }

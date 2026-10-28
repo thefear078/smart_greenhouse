@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smart_greenhouse/theme/app_theme.dart';
+import 'package:smart_greenhouse/ui/theme/app_theme.dart';
 
 /// Прокручуваний вміст сторінки з обмеженою шириною (телефон/планшет).
 class PageContainer extends StatelessWidget {
