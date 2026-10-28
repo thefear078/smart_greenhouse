@@ -33,6 +33,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<void> _register() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!await AppScope.of(context).network.isOnline()) {
+      if (mounted) {
+        Snack.error(context, 'Немає інтернету — реєстрація неможлива');
+      }
+      return;
+    }
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       await AppScope.of(context).auth.register(

@@ -5,14 +5,35 @@ import 'package:smart_greenhouse/data/local/json_store.dart';
 import 'package:smart_greenhouse/data/local/local_auth_repository.dart';
 import 'package:smart_greenhouse/data/local/local_device_repository.dart';
 import 'package:smart_greenhouse/main.dart';
+import 'package:smart_greenhouse/ui/routes.dart';
 
-/// Збирає застосунок поверх in-memory SharedPreferences.
-Future<Widget> buildApp([Map<String, Object> prefs = const {}]) async {
+import 'fakes.dart';
+
+/// Збережений користувач k@lpnu.ua / secret123.
+Map<String, Object> userPrefs({bool session = false}) => {
+  'users':
+      '[{"name":"Костянтин Ягусевич","email":"k@lpnu.ua",'
+      '"passwordHash":"${LocalAuthRepository.hash('secret123')}"}]',
+  if (session) 'session_email': 'k@lpnu.ua',
+};
+
+/// Збирає застосунок поверх in-memory SharedPreferences і фейків.
+/// Як і main(), стартує з дашборда, якщо є збережена сесія.
+Future<Widget> buildApp([
+  Map<String, Object> prefs = const {},
+  FakeNetwork? network,
+  FakeSensors? sensors,
+]) async {
   SharedPreferences.setMockInitialValues(prefs);
   final store = await JsonStore.create();
+  final auth = LocalAuthRepository(store);
+  final loggedIn = await auth.currentUser() != null;
   return SmartGreenhouseApp(
-    auth: LocalAuthRepository(store),
+    auth: auth,
     devices: LocalDeviceRepository(store),
+    network: network ?? FakeNetwork(),
+    sensors: sensors ?? FakeSensors(),
+    initialRoute: loggedIn ? AppRoutes.dashboard : AppRoutes.login,
   );
 }
 

@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.5
   crypto: ^3.0.8
+  mqtt_client: ^10.14.0
+  connectivity_plus: ^7.3.2
 
 dev_dependencies:
   flutter_test:

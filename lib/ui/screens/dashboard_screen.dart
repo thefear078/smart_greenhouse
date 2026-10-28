@@ -7,10 +7,9 @@ import 'package:smart_greenhouse/ui/widgets/confirm_dialog.dart';
 import 'package:smart_greenhouse/ui/widgets/device_form_dialog.dart';
 import 'package:smart_greenhouse/ui/widgets/devices_section.dart';
 import 'package:smart_greenhouse/ui/widgets/greenhouse_header.dart';
+import 'package:smart_greenhouse/ui/widgets/live_sensors_section.dart';
+import 'package:smart_greenhouse/ui/widgets/network_banner.dart';
 import 'package:smart_greenhouse/ui/widgets/page_container.dart';
-import 'package:smart_greenhouse/ui/widgets/responsive_grid.dart';
-import 'package:smart_greenhouse/ui/widgets/section_header.dart';
-import 'package:smart_greenhouse/ui/widgets/sensor_card.dart';
 
 /// Головний екран: датчики (mock) і CRUD пристроїв зі сховища.
 class DashboardScreen extends StatefulWidget {
@@ -80,6 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scope = AppScope.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Smart Greenhouse'),
@@ -96,27 +96,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onPressed: _add,
         child: const Icon(Icons.add),
       ),
-      body: PageContainer(
-        children: [
-          const GreenhouseHeader(
-            name: MockData.greenhouseName,
-            subtitle: 'Усі системи працюють · оновлено щойно',
-          ),
-          const SectionHeader(title: 'Датчики'),
-          ResponsiveGrid(
-            children: [
-              for (final s in MockData.sensors) SensorCard(reading: s),
-            ],
-          ),
-          DevicesSection(
-            devices: _devices,
-            loading: _loading,
-            onEdit: _edit,
-            onDelete: _delete,
-            onToggle: _toggle,
-          ),
-          const SizedBox(height: 80),
-        ],
+      body: NetworkBanner(
+        monitor: scope.network,
+        child: PageContainer(
+          children: [
+            const GreenhouseHeader(
+              name: MockData.greenhouseName,
+              subtitle: 'Телеметрія в реальному часі через MQTT',
+            ),
+            LiveSensorsSection(service: scope.sensors),
+            DevicesSection(
+              devices: _devices,
+              loading: _loading,
+              onEdit: _edit,
+              onDelete: _delete,
+              onToggle: _toggle,
+            ),
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }

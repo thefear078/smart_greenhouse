@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';
@@ -50,6 +51,7 @@ void main() {
     await tapOn(tester, find.byTooltip('Профіль'));
     expect(find.text('k@lpnu.ua'), findsWidgets);
     await tapOn(tester, find.text('Вийти'));
+    await tapOn(tester, find.widgetWithText(FilledButton, 'Вийти'));
     await typeInto(tester, 'Email', 'k@lpnu.ua');
     await typeInto(tester, 'Пароль', 'wrongpass');
     await tapOn(tester, find.text('Увійти'));
