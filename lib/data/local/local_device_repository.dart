@@ -1,10 +1,15 @@
 import 'package:smart_greenhouse/data/local/json_store.dart';
 import 'package:smart_greenhouse/domain/models/device.dart';
+import 'package:smart_greenhouse/domain/repositories/device_cache.dart';
 import 'package:smart_greenhouse/domain/repositories/device_repository.dart';
 
 /// Реалізація [IDeviceRepository] у локальному сховищі.
-class LocalDeviceRepository implements IDeviceRepository {
-  LocalDeviceRepository(this._store);
+/// Також слугує кешем ([IDeviceCache]) для мережевого репозиторію;
+/// у цьому режимі ([withSeed] = false) стартовий набір не додається.
+class LocalDeviceRepository implements IDeviceRepository, IDeviceCache {
+  LocalDeviceRepository(this._store, {this.withSeed = true});
+
+  final bool withSeed;
 
   static const String _key = 'devices';
 
@@ -36,7 +41,8 @@ class LocalDeviceRepository implements IDeviceRepository {
 
   List<Device> _read() {
     final raw = _store.readList(_key);
-    return raw == null ? [...seed] : raw.map(Device.fromJson).toList();
+    if (raw == null) return withSeed ? [...seed] : [];
+    return raw.map(Device.fromJson).toList();
   }
 
   Future<void> _write(List<Device> devices) =>
@@ -44,6 +50,12 @@ class LocalDeviceRepository implements IDeviceRepository {
 
   @override
   Future<List<Device>> getAll() async => List.unmodifiable(_read());
+
+  @override
+  Future<List<Device>> readCache() => getAll();
+
+  @override
+  Future<void> saveCache(List<Device> devices) => _write(devices);
 
   @override
   Future<Device> add({

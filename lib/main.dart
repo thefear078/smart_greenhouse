@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:smart_greenhouse/data/cached/cached_device_repository.dart';
 import 'package:smart_greenhouse/data/local/json_store.dart';
 import 'package:smart_greenhouse/data/local/local_auth_repository.dart';
 import 'package:smart_greenhouse/data/local/local_device_repository.dart';
+import 'package:smart_greenhouse/data/remote/api_client.dart';
+import 'package:smart_greenhouse/data/remote/remote_device_repository.dart';
 import 'package:smart_greenhouse/data/services/connectivity_network_monitor.dart';
 import 'package:smart_greenhouse/data/services/mqtt_sensor_service.dart';
 import 'package:smart_greenhouse/domain/repositories/auth_repository.dart';
@@ -19,11 +22,22 @@ Future<void> main() async {
   // Автологін: якщо сесія збережена — одразу на головний екран
   // (навіть без мережі; про обмежений режим попередить NetworkBanner).
   final loggedIn = await auth.currentUser() != null;
+  final network = ConnectivityNetworkMonitor();
+  final api = ApiClient(
+    baseUrl: ApiClient.defaultBaseUrl,
+    tokenProvider: auth.token,
+  );
   runApp(
     SmartGreenhouseApp(
       auth: auth,
-      devices: LocalDeviceRepository(store),
-      network: ConnectivityNetworkMonitor(),
+      // Той самий інтерфейс IDeviceRepository: локальна реалізація з лаб. 3
+      // замінена на мережеву з кешем без змін в UI.
+      devices: CachedDeviceRepository(
+        remote: RemoteDeviceRepository(api),
+        cache: LocalDeviceRepository(store, withSeed: false),
+        network: network,
+      ),
+      network: network,
       sensors: MqttSensorService(),
       initialRoute: loggedIn ? AppRoutes.dashboard : AppRoutes.login,
     ),
