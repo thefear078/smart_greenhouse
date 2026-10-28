@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smart_greenhouse/counter/counter_screen.dart';
+import 'package:smart_greenhouse/routes.dart';
+import 'package:smart_greenhouse/theme/app_theme.dart';
 
 void main() {
   runApp(const SmartGreenhouseApp());
@@ -13,8 +14,9 @@ class SmartGreenhouseApp extends StatelessWidget {
     return MaterialApp(
       title: 'Smart Greenhouse',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
-      home: const CounterScreen(),
+      theme: AppTheme.light,
+      initialRoute: AppRoutes.login,
+      routes: AppRoutes.table,
     );
   }
 }

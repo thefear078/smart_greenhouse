@@ -1,43 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_greenhouse/counter/counter_command.dart';
 import 'package:smart_greenhouse/main.dart';
 
-Future<void> _enter(WidgetTester tester, String text) async {
-  await tester.enterText(find.byKey(const Key('counterInput')), text);
-  await tester.tap(find.byKey(const Key('submitButton')));
+Future<void> _setSize(WidgetTester tester, Size size) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
+Future<void> _tap(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
   await tester.pumpAndSettle();
 }
 
 void main() {
-  group('CounterCommand.parse', () {
-    test('integer -> AddCommand', () {
-      expect((CounterCommand.parse('5') as AddCommand).value, 5);
-      expect((CounterCommand.parse(' -12 ') as AddCommand).value, -12);
-    });
-    test('exact phrase -> ResetCommand', () {
-      expect(CounterCommand.parse('Avada Kedavra'), isA<ResetCommand>());
-    });
-    test('anything else -> InvalidCommand', () {
-      for (final s in ['', 'abc', '1.5', '2,5', 'avada kedavra', '@#']) {
-        expect(CounterCommand.parse(s), isA<InvalidCommand>(), reason: s);
-      }
-    });
-  });
-
-  testWidgets('add, reset and invalid input scenarios', (tester) async {
+  testWidgets('navigation: login -> register -> back -> dashboard -> profile', (
+    tester,
+  ) async {
     await tester.pumpWidget(const SmartGreenhouseApp());
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('Вхід'), findsOneWidget);
 
-    await _enter(tester, '7');
-    await _enter(tester, '-2');
-    expect(find.text('5'), findsOneWidget);
+    await _tap(tester, find.text('Немає акаунта? Зареєструватися'));
+    expect(find.text('Реєстрація'), findsOneWidget);
 
-    await _enter(tester, '3.14');
-    expect(find.text('5'), findsOneWidget);
-    expect(find.byType(SnackBar), findsOneWidget);
+    await _tap(tester, find.text('Вже є акаунт? Увійти'));
+    await _tap(tester, find.text('Увійти'));
+    expect(find.text('Датчики'), findsOneWidget);
 
-    await _enter(tester, 'Avada Kedavra');
-    expect(find.text('0'), findsOneWidget);
+    await _tap(tester, find.byTooltip('Профіль'));
+    expect(find.text('Обліковий запис'), findsOneWidget);
   });
+
+  for (final size in const [Size(375, 667), Size(1024, 1366)]) {
+    testWidgets('no overflow on ${size.width.toInt()}dp', (tester) async {
+      await _setSize(tester, size);
+      await tester.pumpWidget(const SmartGreenhouseApp());
+      await _tap(tester, find.text('Увійти'));
+      expect(tester.takeException(), isNull);
+      await _tap(tester, find.byTooltip('Профіль'));
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
