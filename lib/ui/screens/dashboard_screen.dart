@@ -4,6 +4,7 @@ import 'package:smart_greenhouse/data/mock_data.dart';
 import 'package:smart_greenhouse/domain/models/device.dart';
 import 'package:smart_greenhouse/logic/devices/devices_cubit.dart';
 import 'package:smart_greenhouse/logic/devices/devices_state.dart';
+import 'package:smart_greenhouse/logic/flashlight/flashlight_cubit.dart';
 import 'package:smart_greenhouse/ui/routes.dart';
 import 'package:smart_greenhouse/ui/widgets/confirm_dialog.dart';
 import 'package:smart_greenhouse/ui/widgets/device_form_dialog.dart';
@@ -87,9 +88,13 @@ class DashboardScreen extends StatelessWidget {
       body: NetworkBanner(
         child: PageContainer(
           children: [
-            const GreenhouseHeader(
-              name: MockData.greenhouseName,
-              subtitle: 'Телеметрія в реальному часі через MQTT',
+            BlocListener<FlashlightCubit, FlashlightState>(
+              listener: (context, s) => Snack.success(context, s.message ?? ''),
+              child: GreenhouseHeader(
+                name: MockData.greenhouseName,
+                subtitle: 'Телеметрія в реальному часі через MQTT',
+                onSecretLongPress: context.read<FlashlightCubit>().toggle,
+              ),
             ),
             const LiveSensorsSection(),
             BlocConsumer<DevicesCubit, DevicesState>(

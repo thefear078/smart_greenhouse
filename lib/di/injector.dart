@@ -7,12 +7,15 @@ import 'package:smart_greenhouse/data/remote/api_client.dart';
 import 'package:smart_greenhouse/data/remote/remote_device_repository.dart';
 import 'package:smart_greenhouse/data/services/connectivity_network_monitor.dart';
 import 'package:smart_greenhouse/data/services/mqtt_sensor_service.dart';
+import 'package:smart_greenhouse/data/services/plugin_flashlight.dart';
 import 'package:smart_greenhouse/domain/repositories/auth_repository.dart';
 import 'package:smart_greenhouse/domain/repositories/device_repository.dart';
+import 'package:smart_greenhouse/domain/services/flashlight_service.dart';
 import 'package:smart_greenhouse/domain/services/network_monitor.dart';
 import 'package:smart_greenhouse/domain/services/sensor_service.dart';
 import 'package:smart_greenhouse/logic/auth/auth_cubit.dart';
 import 'package:smart_greenhouse/logic/devices/devices_cubit.dart';
+import 'package:smart_greenhouse/logic/flashlight/flashlight_cubit.dart';
 import 'package:smart_greenhouse/logic/network/network_cubit.dart';
 import 'package:smart_greenhouse/logic/telemetry/telemetry_cubit.dart';
 
@@ -26,6 +29,7 @@ Future<void> registerDependencies({
   required IDeviceRepository devices,
   required INetworkMonitor network,
   required ISensorService sensors,
+  IFlashlight? flashlight,
 }) async {
   await sl.reset();
   final user = await auth.currentUser();
@@ -35,12 +39,14 @@ Future<void> registerDependencies({
     ..registerSingleton<IDeviceRepository>(devices)
     ..registerSingleton<INetworkMonitor>(network)
     ..registerSingleton<ISensorService>(sensors)
+    ..registerSingleton<IFlashlight>(flashlight ?? PluginFlashlight())
     ..registerLazySingleton<AuthCubit>(
       () => AuthCubit(sl(), sl(), initialUser: user),
     )
     ..registerLazySingleton<NetworkCubit>(() => NetworkCubit(sl()))
     ..registerFactory<DevicesCubit>(() => DevicesCubit(sl()))
-    ..registerFactory<TelemetryCubit>(() => TelemetryCubit(sl()));
+    ..registerFactory<TelemetryCubit>(() => TelemetryCubit(sl()))
+    ..registerFactory<FlashlightCubit>(() => FlashlightCubit(sl()));
 }
 
 /// Продакшн-конфігурація: локальне сховище, REST API з кешем, MQTT.
