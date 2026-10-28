@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smart_greenhouse/theme/app_theme.dart';
-import 'package:smart_greenhouse/widgets/app_logo.dart';
+import 'package:smart_greenhouse/ui/theme/app_theme.dart';
+import 'package:smart_greenhouse/ui/widgets/app_logo.dart';
 
 /// Спільний каркас екранів авторизації: логотип, заголовок і картка форми.
 class AuthLayout extends StatelessWidget {
